@@ -1,0 +1,88 @@
+package com.example.todolist;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity {
+    private EditText editTextTask;
+    private Button buttonAdd;
+    private ListView listViewTasks;
+    private ArrayList<String> tasks;
+    private TodoAdapter adapter;
+    private SharedPreferences sharedPreferences;
+    
+    private static final String PREFS_NAME = "TodoPrefs";
+    private static final String KEY_TASKS = "tasks";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        editTextTask = findViewById(R.id.editTextTask);
+        buttonAdd = findViewById(R.id.buttonAdd);
+        listViewTasks = findViewById(R.id.listViewTasks);
+
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        // Recuperando tarefas salvas
+        tasks = loadTasks();
+        adapter = new TodoAdapter(this, tasks);
+        listViewTasks.setAdapter(adapter);
+
+        // Botão para adicionar nova tarefa
+        buttonAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String task = editTextTask.getText().toString();
+                if (!task.isEmpty()) {
+                    tasks.add(task);
+                    adapter.notifyDataSetChanged();
+                    saveTasks(); // Salva as tarefas no SharedPreferences
+                    editTextTask.setText(""); // Limpa o campo
+                    Toast.makeText(MainActivity.this, "Tarefa adicionada!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Digite uma tarefa!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    // Carregar tarefas salvas
+    private ArrayList<String> loadTasks() {
+        ArrayList<String> savedTasks = new ArrayList<>();
+        String saved = sharedPreferences.getString(KEY_TASKS, "");
+        if (!saved.isEmpty()) {
+            String[] tasksArray = saved.split(",");
+            for (String task : tasksArray) {
+                savedTasks.add(task);
+            }
+        }
+        return savedTasks;
+    }
+
+    // Salvar tarefas no SharedPreferences
+    private void saveTasks() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String task : tasks) {
+            stringBuilder.append(task).append(",");
+        }
+        sharedPreferences.edit().putString(KEY_TASKS, stringBuilder.toString()).apply();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveTasks(); // Salva as tarefas ao pausar a atividade
+    }
+}
