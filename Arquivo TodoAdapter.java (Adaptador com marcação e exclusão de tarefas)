@@ -1,0 +1,66 @@
+package com.example.todolist;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+
+public class TodoAdapter extends ArrayAdapter<String> {
+    private final Context context;
+    private final ArrayList<String> tasks;
+    private final ArrayList<Boolean> taskStatus;
+
+    public TodoAdapter(Context context, ArrayList<String> tasks) {
+        super(context, 0, tasks);
+        this.context = context;
+        this.tasks = tasks;
+        this.taskStatus = new ArrayList<>(tasks.size());
+        // Inicializando status das tarefas como "não concluídas"
+        for (int i = 0; i < tasks.size(); i++) {
+            taskStatus.add(false); // false significa "não concluída"
+        }
+    }
+
+    @Override
+    public View getView(final int position, View convertView, ViewGroup parent) {
+        String task = tasks.get(position);
+        if (convertView == null) {
+            convertView = LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_multiple_choice, parent, false);
+        }
+        
+        TextView textViewTask = convertView.findViewById(android.R.id.text1);
+        textViewTask.setText(task);
+
+        final CheckBox checkBox = convertView.findViewById(android.R.id.checkbox);
+        checkBox.setChecked(taskStatus.get(position));
+
+        // Ao clicar no checkbox, alteramos o status da tarefa
+        checkBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                taskStatus.set(position, checkBox.isChecked());
+                Toast.makeText(context, "Tarefa " + (checkBox.isChecked() ? "concluída" : "não concluída"), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Se desejar excluir uma tarefa ao clicar nela
+        convertView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                tasks.remove(position);
+                taskStatus.remove(position);
+                notifyDataSetChanged();
+                Toast.makeText(context, "Tarefa excluída!", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+
+        return convertView;
+    }
+}
